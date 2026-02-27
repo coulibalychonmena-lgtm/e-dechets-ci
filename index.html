@@ -3,161 +3,151 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>E-Déchets CI | Solution Complète 🇨🇮</title>
+    <title>E-Déchets CI | Version Officielle 🇨🇮</title>
     
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
     <style>
         :root { --vert: #1b5e20; --orange: #ff9800; --gris: #f4f4f4; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--gris); overflow: hidden; }
-        
-        header { background: var(--vert); color: white; padding: 10px; text-align: center; height: 8vh; position: relative; }
-        .cgu-btn { position: absolute; right: 10px; top: 12px; font-size: 11px; border: 1px solid white; padding: 3px 8px; border-radius: 15px; cursor: pointer; }
-        
-        #map { height: 82vh; width: 100%; }
-        
-        .nav-bar { height: 10vh; display: flex; align-items: center; justify-content: center; background: white; border-top: 2px solid #ddd; }
-        .main-btn { background: var(--orange); color: white; border: none; padding: 15px 30px; border-radius: 50px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); cursor: pointer; }
+        header { background: var(--vert); color: white; padding: 10px; text-align: center; height: 8vh; }
+        #map { height: 82vh; width: 100%; z-index: 1; }
+        .nav-bar { height: 10vh; display: flex; align-items: center; justify-content: center; background: white; border-top: 1px solid #ddd; }
+        .main-btn { background: var(--orange); color: white; border: none; padding: 15px 30px; border-radius: 50px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); cursor: pointer; width: 85%; }
 
-        /* Modales */
-        .overlay { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); overflow-y: auto; }
-        .modal { background: white; margin: 10% auto; padding: 20px; width: 85%; max-width: 400px; border-radius: 15px; position: relative; }
+        .overlay { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); overflow-y: auto; }
+        .modal { background: white; margin: 5% auto; padding: 20px; width: 85%; max-width: 400px; border-radius: 15px; }
+        input, select { width: 100%; margin: 10px 0; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+        .preview-img { width: 100%; height: 180px; object-fit: cover; border-radius: 8px; margin-bottom: 10px; border: 2px solid var(--orange); }
+        .gps-info { font-size: 11px; color: #555; background: #eee; padding: 8px; border-radius: 5px; margin-bottom: 10px; }
         
-        input, select { width: 100%; margin: 10px 0; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 15px; box-sizing: border-box; }
-        .preview-img { width: 100%; height: 150px; object-fit: cover; border-radius: 8px; display: none; margin-bottom: 10px; border: 2px solid var(--orange); }
-        
-        .route-btn { background: var(--vert); color: white !important; padding: 10px; text-decoration: none; display: block; text-align: center; border-radius: 8px; margin-top: 10px; font-weight: bold; font-size: 14px; }
-        
+        .route-btn { background: var(--vert); color: white !important; padding: 12px; text-decoration: none; display: block; text-align: center; border-radius: 8px; margin-top: 10px; font-weight: bold; }
         .loading { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 3000; text-align: center; padding-top: 40%; font-weight: bold; color: var(--vert); }
     </style>
 </head>
 <body>
 
-<div id="loading-screen" class="loading">📸 Traitement de l'image...<br>📍 Capture du point GPS</div>
+<div id="loading-screen" class="loading">📸 Traitement de l'image...<br>📍 Localisation précise en cours</div>
 
-<header>
-    <h3 style="margin:0;">E-Déchets CI 🌍</h3>
-    <div class="cgu-btn" onclick="openModal('cgu-modal')">Conditions</div>
-</header>
+<header><h3 style="margin:0;">E-Déchets CI 🌍</h3></header>
 
 <div id="map"></div>
 
 <div class="nav-bar">
-    <button class="main-btn" onclick="triggerCamera()">📷 PHOTO & SIGNALER</button>
+    <button class="main-btn" onclick="document.getElementById('camera-file').click()">📷 PHOTO & SIGNALER</button>
 </div>
 
 <input type="file" id="camera-file" accept="image/*" capture="camera" style="display:none">
 
 <div id="form-modal" class="overlay">
     <div class="modal">
-        <h3 style="color:var(--vert); margin-top:0;">Nouveau Signalement</h3>
+        <h3 style="color:var(--vert); margin-top:0;">Détails du Signalement</h3>
         <img id="img-preview" class="preview-img">
-        <p id="gps-status" style="font-size: 12px; color: #666; background: #eee; padding: 5px;"></p>
+        <div id="address-display" class="gps-info">Recherche de l'adresse...</div>
         
-        <input type="text" id="node-name" placeholder="Ex: Devant l'ESATIC">
+        <input type="text" id="node-name" placeholder="Lieu précis (ex: Près du maquis)">
         <select id="node-type">
             <option value="Informatique/Mobile">💻 Informatique & Mobile</option>
             <option value="Batteries/Piles">🔋 Piles & Batteries</option>
             <option value="Gros Electroménager">📺 Gros Électroménager</option>
         </select>
         
-        <button onclick="sendToFirebase()" style="width:100%; background:var(--vert); color:white; border:none; padding:15px; border-radius:8px; font-weight:bold; cursor:pointer;">ENVOYER LE SIGNALEMENT</button>
-        <button onclick="closeModal('form-modal')" style="width:100%; margin-top:10px; background:none; border:none; color:#888;">Annuler</button>
-    </div>
-</div>
-
-<div id="cgu-modal" class="overlay">
-    <div class="modal">
-        <h3 style="color:var(--vert);">Conditions d'Utilisation</h3>
-        <div style="font-size: 13px; text-align: left; max-height: 300px; overflow-y: scroll;">
-            <p><b>1. Utilisation du GPS :</b> Nous capturons votre position exacte uniquement au moment de la photo pour garantir la précision de la collecte.</p>
-            <p><b>2. Appareil Photo :</b> La photo sert de preuve visuelle de l'état du déchet pour les agents de collecte.</p>
-            <p><b>3. Données :</b> Les données sont stockées sur Google Cloud (Firebase). Aucune donnée n'est revendue à des tiers.</p>
-            <p><b>4. Abus :</b> Tout faux signalement répété entraînera la suspension de l'accès à la plateforme.</p>
-        </div>
-        <button onclick="closeModal('cgu-modal')" style="width:100%; background:var(--vert); color:white; border:none; padding:12px; border-radius:8px; margin-top:15px;">J'accepte</button>
+        <button id="submit-btn" style="width:100%; background:var(--vert); color:white; border:none; padding:15px; border-radius:8px; font-weight:bold;">CONFIRMER LE SIGNALEMENT</button>
+        <button onclick="location.reload()" style="width:100%; margin-top:10px; background:none; border:none; color:#888;">Annuler</button>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyCx78sbB4rxfF24tzooTUWPrZcOOGWDL8xk",
         authDomain: "e-dechets-ci.firebaseapp.com",
         projectId: "e-dechets-ci",
-        storageBucket: "e-dechets-ci.firebasestorage.app",
-        messagingSenderId: "921449360134",
-        appId: "1:921449360134:web:db17f6d1f285ecddfa8c87",
-        measurementId: "G-JDHMRMWHS8"
+        appId: "1:921449360134:web:db17f6d1f285ecddfa8c87"
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const colRef = collection(db, "points_collecte");
 
-    var map = L.map('map').setView([5.3484, -4.0305], 13);
+    var map = L.map('map', {zoomControl: false}).setView([5.3484, -4.0305], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
     let currentCoords = null;
-    const cameraFile = document.getElementById('camera-file');
+    let compressedImage = null;
+    let currentAddress = "Adresse inconnue";
 
-    window.openModal = (id) => document.getElementById(id).style.display = 'block';
-    window.closeModal = (id) => document.getElementById(id).style.display = 'none';
-
-    window.triggerCamera = () => cameraFile.click();
-
-    cameraFile.onchange = async (e) => {
+    document.getElementById('camera-file').onchange = async (e) => {
         if (e.target.files.length > 0) {
             document.getElementById('loading-screen').style.display = 'block';
             
-            // Aperçu image
-            const reader = new FileReader();
-            reader.onload = (f) => {
-                document.getElementById('img-preview').src = f.target.result;
-                document.getElementById('img-preview').style.display = 'block';
-            };
-            reader.readAsDataURL(e.target.files[0]);
-
-            // Capture GPS simultanée
             navigator.geolocation.getCurrentPosition(async (pos) => {
                 currentCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
                 map.setView([currentCoords.lat, currentCoords.lng], 17);
-                
+
+                // --- Récupération de l'adresse (Reverse Geocoding) ---
                 try {
                     const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${currentCoords.lat}&lon=${currentCoords.lng}&format=json`);
                     const data = await res.json();
-                    window.lastAddr = data.display_name;
-                    document.getElementById('gps-status').innerText = "📍 " + data.display_name.split(',').slice(0,3).join(',');
-                } catch { window.lastAddr = "Abidjan, CI"; }
-
-                document.getElementById('loading-screen').style.display = 'none';
-                openModal('form-modal');
+                    currentAddress = data.display_name;
+                    document.getElementById('address-display').innerText = "📍 " + currentAddress;
+                } catch (err) {
+                    currentAddress = "Localisation GPS uniquement";
+                    document.getElementById('address-display').innerText = "📍 " + currentAddress;
+                }
+                
+                // --- Compression de la photo ---
+                const reader = new FileReader();
+                reader.readAsDataURL(e.target.files[0]);
+                reader.onload = (f) => {
+                    const img = new Image();
+                    img.src = f.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const MAX_SIZE = 600;
+                        let w = img.width; let h = img.height;
+                        if (w > h) { if (w > MAX_SIZE) { h *= MAX_SIZE / w; w = MAX_SIZE; } } 
+                        else { if (h > MAX_SIZE) { w *= MAX_SIZE / h; h = MAX_SIZE; } }
+                        canvas.width = w; canvas.height = h;
+                        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                        compressedImage = canvas.toDataURL('image/jpeg', 0.6);
+                        
+                        document.getElementById('img-preview').src = compressedImage;
+                        document.getElementById('loading-screen').style.display = 'none';
+                        document.getElementById('form-modal').style.display = 'block';
+                    };
+                };
             }, (err) => {
-                alert("GPS requis pour valider le signalement.");
-                document.getElementById('loading-screen').style.display = 'none';
+                alert("Erreur GPS : Veuillez activer la localisation précise sur Android.");
+                location.reload();
             }, { enableHighAccuracy: true });
         }
     };
 
-    window.sendToFirebase = async () => {
-        const nom = document.getElementById('node-name').value || "Déchet signalé";
-        const type = document.getElementById('node-type').value;
+    document.getElementById('submit-btn').onclick = async () => {
+        const btn = document.getElementById('submit-btn');
+        btn.disabled = true; btn.innerText = "Enregistrement...";
 
-        await addDoc(colRef, {
-            lat: currentCoords.lat,
-            lng: currentCoords.lng,
-            nom: nom,
-            type: type,
-            adresse: window.lastAddr,
-            timestamp: new Date()
-        });
+        try {
+            // ENVOI COMPLET DES CHAMPS VERS FIRESTORE
+            await addDoc(colRef, {
+                lat: currentCoords.lat,
+                lng: currentCoords.lng,
+                adresse: currentAddress,
+                nom: document.getElementById('node-name').value || "Signalement anonyme",
+                type: document.getElementById('node-type').value,
+                photo: compressedImage,
+                date: serverTimestamp()
+            });
 
-        closeModal('form-modal');
-        alert("Signalement envoyé avec succès !");
+            alert("Signalement envoyé avec succès ! Merci. 🇨🇮");
+            location.reload();
+        } catch (error) {
+            alert("Erreur Firestore : " + error.message);
+            btn.disabled = false;
+        }
     };
 
     onSnapshot(colRef, (snap) => {
@@ -167,9 +157,13 @@
                 const routeUrl = `https://www.google.com/maps/dir/?api=1&destination=${d.lat},${d.lng}`;
                 L.marker([d.lat, d.lng]).addTo(map)
                     .bindPopup(`
-                        <b>${d.nom}</b><br>${d.type}<br>
-                        <small>${d.adresse.split(',').slice(0,2).join(',')}</small>
-                        <a href="${routeUrl}" class="route-btn" target="_blank">🚀 TRAJET COLLECTE</a>
+                        <div style="width:160px">
+                            <img src="${d.photo}" style="width:100%; border-radius:5px">
+                            <b style="color:green">${d.type}</b><br>
+                            <small>${d.nom}</small><br>
+                            <small style="color:#666">${d.adresse ? d.adresse.substring(0,40) + '...' : ''}</small>
+                            <a href="${routeUrl}" class="route-btn" target="_blank">🚀 ITINÉRAIRE</a>
+                        </div>
                     `);
             }
         });
