@@ -1,33 +1,64 @@
-<!DOCTYPE html>
+t<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>E-Déchets CI | Version Officielle 🇨🇮</title>
+    <title>E-Déchets CI | Officiel 🇨🇮</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
     <style>
         :root { --vert: #1b5e20; --orange: #ff9800; --gris: #f4f4f4; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--gris); overflow: hidden; }
-        header { background: var(--vert); color: white; padding: 10px; text-align: center; height: 8vh; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--gris); overflow: hidden; height: 100vh; }
+        
+        header { background: var(--vert); color: white; padding: 10px; text-align: center; height: 8vh; position: relative; z-index: 1000; }
+        
+        /* La carte occupe l'espace restant sans pousser le bouton */
         #map { height: 82vh; width: 100%; z-index: 1; }
-        .nav-bar { height: 10vh; display: flex; align-items: center; justify-content: center; background: white; border-top: 1px solid #ddd; }
-        .main-btn { background: var(--orange); color: white; border: none; padding: 15px 30px; border-radius: 50px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); cursor: pointer; width: 85%; }
+        
+        /* Barre de navigation fixée en bas pour être toujours devant */
+        .nav-bar { 
+            height: 10vh; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            background: white; 
+            border-top: 1px solid #ddd;
+            position: fixed; 
+            bottom: 0; 
+            left: 0; 
+            width: 100%; 
+            z-index: 9999; 
+        }
 
-        .overlay { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); overflow-y: auto; }
+        .main-btn { 
+            background: var(--orange); 
+            color: white; 
+            border: none; 
+            padding: 15px 30px; 
+            border-radius: 50px; 
+            font-weight: bold; 
+            font-size: 16px; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2); 
+            cursor: pointer; 
+            width: 85%; 
+        }
+
+        /* Fenêtres modales */
+        .overlay { display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); overflow-y: auto; }
         .modal { background: white; margin: 5% auto; padding: 20px; width: 85%; max-width: 400px; border-radius: 15px; }
+        
         input, select { width: 100%; margin: 10px 0; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
         .preview-img { width: 100%; height: 180px; object-fit: cover; border-radius: 8px; margin-bottom: 10px; border: 2px solid var(--orange); }
-        .gps-info { font-size: 11px; color: #555; background: #eee; padding: 8px; border-radius: 5px; margin-bottom: 10px; }
+        .gps-info { font-size: 11px; color: #555; background: #eee; padding: 8px; border-radius: 5px; margin-bottom: 10px; line-height: 1.4; }
         
         .route-btn { background: var(--vert); color: white !important; padding: 12px; text-decoration: none; display: block; text-align: center; border-radius: 8px; margin-top: 10px; font-weight: bold; }
-        .loading { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 3000; text-align: center; padding-top: 40%; font-weight: bold; color: var(--vert); }
+        .loading { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 11000; text-align: center; padding-top: 40%; font-weight: bold; color: var(--vert); }
     </style>
 </head>
 <body>
 
-<div id="loading-screen" class="loading">📸 Traitement de l'image...<br>📍 Localisation précise en cours</div>
+<div id="loading-screen" class="loading">📸 Traitement de l'image...<br>📍 Localisation en cours</div>
 
 <header><h3 style="margin:0;">E-Déchets CI 🌍</h3></header>
 
@@ -41,18 +72,18 @@
 
 <div id="form-modal" class="overlay">
     <div class="modal">
-        <h3 style="color:var(--vert); margin-top:0;">Détails du Signalement</h3>
+        <h3 style="color:var(--vert); margin-top:0;">Nouveau Signalement</h3>
         <img id="img-preview" class="preview-img">
         <div id="address-display" class="gps-info">Recherche de l'adresse...</div>
         
-        <input type="text" id="node-name" placeholder="Lieu précis (ex: Près du maquis)">
+        <input type="text" id="node-name" placeholder="Lieu (ex: Près de la pharmacie)">
         <select id="node-type">
             <option value="Informatique/Mobile">💻 Informatique & Mobile</option>
             <option value="Batteries/Piles">🔋 Piles & Batteries</option>
             <option value="Gros Electroménager">📺 Gros Électroménager</option>
         </select>
         
-        <button id="submit-btn" style="width:100%; background:var(--vert); color:white; border:none; padding:15px; border-radius:8px; font-weight:bold;">CONFIRMER LE SIGNALEMENT</button>
+        <button id="submit-btn" style="width:100%; background:var(--vert); color:white; border:none; padding:15px; border-radius:8px; font-weight:bold;">CONFIRMER L'ENVOI</button>
         <button onclick="location.reload()" style="width:100%; margin-top:10px; background:none; border:none; color:#888;">Annuler</button>
     </div>
 </div>
@@ -72,6 +103,7 @@
     const db = getFirestore(app);
     const colRef = collection(db, "points_collecte");
 
+    // Initialisation Carte
     var map = L.map('map', {zoomControl: false}).setView([5.3484, -4.0305], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
@@ -79,6 +111,7 @@
     let compressedImage = null;
     let currentAddress = "Adresse inconnue";
 
+    // Action Caméra
     document.getElementById('camera-file').onchange = async (e) => {
         if (e.target.files.length > 0) {
             document.getElementById('loading-screen').style.display = 'block';
@@ -87,18 +120,18 @@
                 currentCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
                 map.setView([currentCoords.lat, currentCoords.lng], 17);
 
-                // --- Récupération de l'adresse (Reverse Geocoding) ---
+                // Récupération adresse
                 try {
                     const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${currentCoords.lat}&lon=${currentCoords.lng}&format=json`);
                     const data = await res.json();
                     currentAddress = data.display_name;
                     document.getElementById('address-display').innerText = "📍 " + currentAddress;
                 } catch (err) {
-                    currentAddress = "Localisation GPS uniquement";
+                    currentAddress = "Coordonnées GPS uniquement";
                     document.getElementById('address-display').innerText = "📍 " + currentAddress;
                 }
                 
-                // --- Compression de la photo ---
+                // Compression Photo
                 const reader = new FileReader();
                 reader.readAsDataURL(e.target.files[0]);
                 reader.onload = (f) => {
@@ -120,36 +153,37 @@
                     };
                 };
             }, (err) => {
-                alert("Erreur GPS : Veuillez activer la localisation précise sur Android.");
+                alert("Erreur : Activez votre GPS.");
                 location.reload();
             }, { enableHighAccuracy: true });
         }
     };
 
+    // Envoi Firestore
     document.getElementById('submit-btn').onclick = async () => {
         const btn = document.getElementById('submit-btn');
-        btn.disabled = true; btn.innerText = "Enregistrement...";
+        btn.disabled = true; btn.innerText = "Envoi...";
 
         try {
-            // ENVOI COMPLET DES CHAMPS VERS FIRESTORE
             await addDoc(colRef, {
                 lat: currentCoords.lat,
                 lng: currentCoords.lng,
                 adresse: currentAddress,
-                nom: document.getElementById('node-name').value || "Signalement anonyme",
+                nom: document.getElementById('node-name').value || "Déchet signalé",
                 type: document.getElementById('node-type').value,
                 photo: compressedImage,
                 date: serverTimestamp()
             });
 
-            alert("Signalement envoyé avec succès ! Merci. 🇨🇮");
+            alert("Signalement réussi ! 🇨🇮");
             location.reload();
         } catch (error) {
-            alert("Erreur Firestore : " + error.message);
+            alert("Erreur : " + error.message);
             btn.disabled = false;
         }
     };
 
+    // Affichage des marqueurs
     onSnapshot(colRef, (snap) => {
         snap.docChanges().forEach((change) => {
             if (change.type === "added") {
@@ -161,8 +195,7 @@
                             <img src="${d.photo}" style="width:100%; border-radius:5px">
                             <b style="color:green">${d.type}</b><br>
                             <small>${d.nom}</small><br>
-                            <small style="color:#666">${d.adresse ? d.adresse.substring(0,40) + '...' : ''}</small>
-                            <a href="${routeUrl}" class="route-btn" target="_blank">🚀 ITINÉRAIRE</a>
+                            <a href="${roueUrl}" class="route-btn" target="_blank">🚀 Y ALLER</a>
                         </div>
                     `);
             }
