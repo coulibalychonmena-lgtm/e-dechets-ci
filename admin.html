@@ -6,16 +6,48 @@
     <title>Dashboard ADMIN | E-Déchets CI</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        body { font-family: sans-serif; margin: 0; }
-        header { background: #d32f2f; color: white; padding: 15px; text-align: center; }
-        #map { height: 92vh; width: 100%; }
+        :root { --rouge: #d32f2f; --vert: #1b5e20; --bleu: #1976d2; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f0f2f5; }
+        header { background: var(--rouge); color: white; padding: 15px; text-align: center; font-weight: bold; }
+        
+        /* Style des Statistiques */
+        .stats-container { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); 
+            gap: 10px; 
+            padding: 15px; 
+            background: white; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .stat-card { 
+            padding: 15px; 
+            border-radius: 10px; 
+            text-align: center; 
+            color: white; 
+            font-size: 14px; 
+        }
+        .stat-total { background: #333; }
+        .stat-info { background: var(--bleu); }
+        .stat-batt { background: #fbc02d; color: black; }
+        .stat-elec { background: #7b1fa2; }
+        .stat-card span { display: block; font-size: 24px; font-weight: bold; }
+
+        #map { height: 70vh; width: 100%; }
         .admin-popup img { width: 100%; border-radius: 5px; margin-bottom: 5px; }
-        .route-btn { background: #1b5e20; color: white !important; padding: 10px; display: block; text-align: center; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 5px; }
+        .route-btn { background: var(--vert); color: white !important; padding: 10px; display: block; text-align: center; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 5px; }
     </style>
 </head>
 <body>
 
-<header><strong>PANNEAU DE GESTION DES COLLECTES (ADMIN)</strong></header>
+<header>GESTION DES COLLECTES - E-DÉCHETS CI</header>
+
+<div class="stats-container">
+    <div class="stat-card stat-total">Total<span id="count-all">0</span></div>
+    <div class="stat-card stat-info">💻 Info/Mobile<span id="count-info">0</span></div>
+    <div class="stat-card stat-batt">🔋 Batteries<span id="count-batt">0</span></div>
+    <div class="stat-card stat-elec">📺 Électro<span id="count-elec">0</span></div>
+</div>
+
 <div id="map"></div>
 
 <script type="module">
@@ -36,24 +68,43 @@
     var map = L.map('map').setView([5.3484, -4.0305], 11);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
+    // Initialisation des compteurs
+    let stats = { all: 0, info: 0, batt: 0, elec: 0 };
+
     onSnapshot(colRef, (snap) => {
-        snap.docChanges().forEach((change) => {
-            if (change.type === "added") {
-                const d = change.doc.data();
-                const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${d.lat},${d.lng}`;
-                
-                L.marker([d.lat, d.lng]).addTo(map)
-                    .bindPopup(`
-                        <div class="admin-popup" style="width:200px">
-                            <img src="${d.photo}">
-                            <strong>Type: ${d.type}</strong><br>
-                            <small>Lieu: ${d.nom}</small><br>
-                            <p style="font-size:10px">${d.adresse}</p>
-                            <a href="${googleMapsUrl}" target="_blank" class="route-btn">🚀 LANCER L'ITINÉRAIRE</a>
-                        </div>
-                    `);
-            }
+        // Réinitialiser les stats à chaque mise à jour
+        stats = { all: 0, info: 0, batt: 0, elec: 0 };
+        
+        // Nettoyer la carte pour éviter les doublons
+        map.eachLayer((layer) => { if (layer instanceof L.Marker) map.removeLayer(layer); });
+
+        snap.forEach((doc) => {
+            const d = doc.data();
+            stats.all++;
+            
+            // Incrémentation par catégorie
+            if(d.type.includes("Informatique")) stats.info++;
+            else if(d.type.includes("Batteries")) stats.batt++;
+            else if(d.type.includes("Electromenager")) stats.elec++;
+
+            const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${d.lat},${d.lng}`;
+            
+            L.marker([d.lat, d.lng]).addTo(map)
+                .bindPopup(`
+                    <div class="admin-popup" style="width:200px">
+                        <img src="${d.photo}">
+                        <strong>${d.type}</strong><br>
+                        <small>${d.nom}</small><br>
+                        <a href="${googleMapsUrl}" target="_blank" class="route-btn">🚀 Y ALLER</a>
+                    </div>
+                `);
         });
+
+        // Mise à jour de l'affichage des chiffres
+        document.getElementById('count-all').innerText = stats.all;
+        document.getElementById('count-info').innerText = stats.info;
+        document.getElementById('count-batt').innerText = stats.batt;
+        document.getElementById('count-elec').innerText = stats.elec;
     });
 </script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
