@@ -11,13 +11,13 @@
         header { background: var(--vert); color: white; padding: 10px; text-align: center; height: 8vh; z-index: 1000; }
         #map { height: 82vh; width: 100%; z-index: 1; }
         .nav-bar { height: 10vh; display: flex; align-items: center; justify-content: center; background: white; border-top: 1px solid #ddd; position: fixed; bottom: 0; width: 100%; z-index: 9999; }
-        .main-btn { background: var(--orange); color: white; border: none; padding: 15px 30px; border-radius: 50px; font-weight: bold; width: 85%; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .main-btn { background: var(--orange); color: white; border: none; padding: 15px 30px; border-radius: 50px; font-weight: bold; width: 85%; box-shadow: 0 4px 10px rgba(0,0,0,0.2); font-size: 16px; }
         #cgu-overlay { position: fixed; z-index: 20000; left: 0; top: 0; width: 100%; height: 100%; background: white; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; }
         .overlay { display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); overflow-y: auto; }
         .modal { background: white; margin: 5% auto; padding: 20px; width: 85%; max-width: 400px; border-radius: 15px; }
-        input, select { width: 100%; margin: 10px 0; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
-        .preview-img { width: 100%; height: 180px; object-fit: cover; border-radius: 8px; border: 2px solid var(--orange); }
-        .gps-info { font-size: 11px; color: #555; background: #eee; padding: 8px; border-radius: 5px; margin: 10px 0; }
+        input, select { width: 100%; margin: 8px 0; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
+        .preview-img { width: 100%; height: 150px; object-fit: cover; border-radius: 8px; border: 2px solid var(--orange); }
+        .gps-info { font-size: 11px; color: #555; background: #eee; padding: 8px; border-radius: 5px; margin: 8px 0; }
         .loading { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 15000; text-align: center; padding-top: 40%; font-weight: bold; color: var(--vert); }
     </style>
 </head>
@@ -26,13 +26,13 @@
 <div id="cgu-overlay">
     <h2 style="color:var(--vert)">E-Déchets CI 🇨🇮</h2>
     <div style="flex-grow:1; overflow-y:auto;">
-        <h3>Conditions d'utilisation</h3>
-        <p>En signalant un déchet, vous aidez à protéger l'environnement en Côte d'Ivoire. Nous collectons votre position GPS et la photo du déchet pour permettre le ramassage par nos services autorisés.</p>
+        <h3>Eco-Engagement</h3>
+        <p>En signalant un déchet, vous participez à la dépollution de la Côte d'Ivoire. Nous collectons votre email pour vous remercier et vous tenir informé du ramassage.</p>
     </div>
     <button onclick="document.getElementById('cgu-overlay').style.display='none'" style="background:var(--vert); color:white; border:none; padding:15px; border-radius:8px; width:100%; font-weight:bold;">ACCEPTER</button>
 </div>
 
-<div id="loading-screen" class="loading">📸 Traitement du signalement...</div>
+<div id="loading-screen" class="loading">📸 Traitement de l'image...<br>📍 GPS en cours</div>
 
 <header><h3 style="margin:0;">Signaler un E-Déchet 🌍</h3></header>
 <div id="map"></div>
@@ -47,13 +47,16 @@
     <div class="modal">
         <h3 style="color:var(--vert); margin:0;">Détails du Signalement</h3>
         <img id="img-preview" class="preview-img">
-        <div id="address-display" class="gps-info">Localisation en cours...</div>
-        <input type="text" id="node-name" placeholder="Nom du lieu (ex: Rue 12 Plateau)">
+        <div id="address-display" class="gps-info">Localisation...</div>
+        
+        <input type="email" id="user-email" placeholder="Votre E-mail (Requis)" required>
+        <input type="text" id="node-name" placeholder="Nom du lieu (ex: Marché d'Adjamé)">
         <select id="node-type">
             <option value="Informatique">💻 Informatique/Mobile</option>
             <option value="Batteries">🔋 Piles/Batteries</option>
             <option value="Electromenager">📺 Électroménager</option>
         </select>
+        
         <button id="submit-btn" style="width:100%; background:var(--vert); color:white; border:none; padding:15px; border-radius:8px; font-weight:bold;">ENVOYER LE SIGNALEMENT</button>
         <button onclick="location.reload()" style="width:100%; margin-top:10px; background:none; border:none; color:#888;">Annuler</button>
     </div>
@@ -77,7 +80,7 @@
     var map = L.map('map', {zoomControl: false}).setView([5.3484, -4.0305], 12);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-    let currentCoords = null; let compressedImage = null; let currentAddress = "";
+    let currentCoords = null, compressedImage = null, currentAddress = "";
 
     document.getElementById('camera-file').onchange = async (e) => {
         if (e.target.files.length > 0) {
@@ -100,7 +103,7 @@
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
                         const MAX_SIZE = 600;
-                        let w = img.width; let h = img.height;
+                        let w = img.width, h = img.height;
                         if (w > h) { if (w > MAX_SIZE) { h *= MAX_SIZE / w; w = MAX_SIZE; } } 
                         else { if (h > MAX_SIZE) { w *= MAX_SIZE / h; h = MAX_SIZE; } }
                         canvas.width = w; canvas.height = h;
@@ -111,21 +114,25 @@
                         document.getElementById('form-modal').style.display = 'block';
                     };
                 };
-            }, () => alert("GPS nécessaire."), { enableHighAccuracy: true });
+            }, () => alert("GPS requis."), { enableHighAccuracy: true });
         }
     };
 
     document.getElementById('submit-btn').onclick = async () => {
+        const email = document.getElementById('user-email').value;
+        if(!email.includes('@')) { alert("Email valide requis !"); return; }
+        
         try {
             await addDoc(colRef, {
                 lat: currentCoords.lat, lng: currentCoords.lng,
                 adresse: currentAddress,
+                email: email,
                 nom: document.getElementById('node-name').value || "Signalement",
                 type: document.getElementById('node-type').value,
                 photo: compressedImage,
                 date: serverTimestamp()
             });
-            alert("Merci ! Signalement envoyé aux services de collecte. 🇨🇮");
+            alert("Merci ! Un email de remerciement vous a été envoyé. 🇨🇮");
             location.reload();
         } catch { alert("Erreur d'envoi."); }
     };
