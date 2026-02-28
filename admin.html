@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard ADMIN | E-Déchets CI</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body { font-family: sans-serif; margin: 0; }
+        header { background: #d32f2f; color: white; padding: 15px; text-align: center; }
+        #map { height: 92vh; width: 100%; }
+        .admin-popup img { width: 100%; border-radius: 5px; margin-bottom: 5px; }
+        .route-btn { background: #1b5e20; color: white !important; padding: 10px; display: block; text-align: center; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+<header><strong>PANNEAU DE GESTION DES COLLECTES (ADMIN)</strong></header>
+<div id="map"></div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCx78sbB4rxfF24tzooTUWPrZcOOGWDL8xk",
+        authDomain: "e-dechets-ci.firebaseapp.com",
+        projectId: "e-dechets-ci",
+        appId: "1:921449360134:web:db17f6d1f285ecddfa8c87"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const colRef = collection(db, "points_collecte");
+
+    var map = L.map('map').setView([5.3484, -4.0305], 11);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+    onSnapshot(colRef, (snap) => {
+        snap.docChanges().forEach((change) => {
+            if (change.type === "added") {
+                const d = change.doc.data();
+                const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${d.lat},${d.lng}`;
+                
+                L.marker([d.lat, d.lng]).addTo(map)
+                    .bindPopup(`
+                        <div class="admin-popup" style="width:200px">
+                            <img src="${d.photo}">
+                            <strong>Type: ${d.type}</strong><br>
+                            <small>Lieu: ${d.nom}</small><br>
+                            <p style="font-size:10px">${d.adresse}</p>
+                            <a href="${googleMapsUrl}" target="_blank" class="route-btn">🚀 LANCER L'ITINÉRAIRE</a>
+                        </div>
+                    `);
+            }
+        });
+    });
+</script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</body>
+</html>
