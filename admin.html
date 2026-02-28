@@ -6,53 +6,32 @@
     <title>Dashboard ADMIN | E-Déchets CI</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        :root { --rouge: #d32f2f; --vert: #1b5e20; --bleu: #1976d2; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f0f2f5; }
+        :root { --rouge: #d32f2f; --vert: #1b5e20; --bleu: #1976d2; --orange: #ff9800; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f4f7f6; }
         header { background: var(--rouge); color: white; padding: 15px; text-align: center; font-weight: bold; }
-        
-        /* Style des Statistiques */
-        .stats-container { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); 
-            gap: 10px; 
-            padding: 15px; 
-            background: white; 
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        .stat-card { 
-            padding: 15px; 
-            border-radius: 10px; 
-            text-align: center; 
-            color: white; 
-            font-size: 14px; 
-        }
-        .stat-total { background: #333; }
-        .stat-info { background: var(--bleu); }
-        .stat-batt { background: #fbc02d; color: black; }
-        .stat-elec { background: #7b1fa2; }
-        .stat-card span { display: block; font-size: 24px; font-weight: bold; }
-
-        #map { height: 70vh; width: 100%; }
-        .admin-popup img { width: 100%; border-radius: 5px; margin-bottom: 5px; }
-        .route-btn { background: var(--vert); color: white !important; padding: 10px; display: block; text-align: center; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 5px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 15px; background: #fff; }
+        .card { padding: 15px; border-radius: 12px; text-align: center; color: white; }
+        .bg-total { background: #2c3e50; } .bg-info { background: var(--bleu); } .bg-batt { background: var(--orange); } .bg-elec { background: #8e44ad; }
+        .card span { display: block; font-size: 28px; font-weight: 900; }
+        #map { height: 65vh; width: 100%; border-top: 2px solid #ddd; }
+        .admin-popup { text-align: center; font-size: 13px; }
+        .admin-popup img { width: 100%; border-radius: 8px; margin-bottom: 8px; }
+        .btn-nav { display: block; background: var(--vert); color: white !important; padding: 10px; text-decoration: none; border-radius: 6px; font-weight: bold; margin-bottom: 8px; }
+        .btn-delete { display: block; background: #fff; color: #d32f2f !important; padding: 8px; border-radius: 6px; font-size: 11px; font-weight: bold; border: 1px solid #d32f2f; cursor: pointer; width: 100%; }
     </style>
 </head>
 <body>
-
-<header>GESTION DES COLLECTES - E-DÉCHETS CI</header>
-
-<div class="stats-container">
-    <div class="stat-card stat-total">Total<span id="count-all">0</span></div>
-    <div class="stat-card stat-info">💻 Info/Mobile<span id="count-info">0</span></div>
-    <div class="stat-card stat-batt">🔋 Batteries<span id="count-batt">0</span></div>
-    <div class="stat-card stat-elec">📺 Électro<span id="count-elec">0</span></div>
+<header>ADMIN : GESTION DES COLLECTES 🇨🇮</header>
+<div class="stats-grid">
+    <div class="card bg-total"><small>Total</small><span id="s-all">0</span></div>
+    <div class="card bg-info"><small>Informatique</small><span id="s-info">0</span></div>
+    <div class="card bg-batt"><small>Batteries</small><span id="s-batt">0</span></div>
+    <div class="card bg-elec"><small>Électro</small><span id="s-elec">0</span></div>
 </div>
-
 <div id="map"></div>
-
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, onSnapshot, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyCx78sbB4rxfF24tzooTUWPrZcOOGWDL8xk",
@@ -68,43 +47,40 @@
     var map = L.map('map').setView([5.3484, -4.0305], 11);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-    // Initialisation des compteurs
-    let stats = { all: 0, info: 0, batt: 0, elec: 0 };
+    window.supprimerDechet = async (id) => {
+        if(confirm("Confirmer la collecte ?")) { await deleteDoc(doc(db, "points_collecte", id)); }
+    };
 
     onSnapshot(colRef, (snap) => {
-        // Réinitialiser les stats à chaque mise à jour
-        stats = { all: 0, info: 0, batt: 0, elec: 0 };
-        
-        // Nettoyer la carte pour éviter les doublons
+        let count = { all: 0, info: 0, batt: 0, elec: 0 };
         map.eachLayer((layer) => { if (layer instanceof L.Marker) map.removeLayer(layer); });
 
-        snap.forEach((doc) => {
-            const d = doc.data();
-            stats.all++;
-            
-            // Incrémentation par catégorie
-            if(d.type.includes("Informatique")) stats.info++;
-            else if(d.type.includes("Batteries")) stats.batt++;
-            else if(d.type.includes("Electromenager")) stats.elec++;
+        snap.forEach((docDb) => {
+            const d = docDb.data();
+            const id = docDb.id;
+            const typeLower = (d.type || "").toLowerCase();
+            count.all++;
+            if (typeLower.includes("info")) count.info++;
+            else if (typeLower.includes("batt")) count.batt++;
+            else if (typeLower.includes("elec")) count.elec++;
 
-            const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${d.lat},${d.lng}`;
+            const navUrl = `https://www.google.com/maps/dir/?api=1&destination=${d.lat},${d.lng}`;
             
-            L.marker([d.lat, d.lng]).addTo(map)
-                .bindPopup(`
-                    <div class="admin-popup" style="width:200px">
-                        <img src="${d.photo}">
-                        <strong>${d.type}</strong><br>
-                        <small>${d.nom}</small><br>
-                        <a href="${googleMapsUrl}" target="_blank" class="route-btn">🚀 Y ALLER</a>
-                    </div>
-                `);
+            L.marker([d.lat, d.lng]).addTo(map).bindPopup(`
+                <div class="admin-popup" style="width:180px">
+                    <img src="${d.photo}">
+                    <strong>${d.type}</strong><br>
+                    <small>📧 ${d.email}</small><br>
+                    <small>📍 ${d.nom}</small><br><br>
+                    <a href="${navUrl}" target="_blank" class="btn-nav">🚀 Y ALLER</a>
+                    <button onclick="supprimerDechet('${id}')" class="btn-delete">✅ COLLECTÉ</button>
+                </div>
+            `);
         });
-
-        // Mise à jour de l'affichage des chiffres
-        document.getElementById('count-all').innerText = stats.all;
-        document.getElementById('count-info').innerText = stats.info;
-        document.getElementById('count-batt').innerText = stats.batt;
-        document.getElementById('count-elec').innerText = stats.elec;
+        document.getElementById('s-all').innerText = count.all;
+        document.getElementById('s-info').innerText = count.info;
+        document.getElementById('s-batt').innerText = count.batt;
+        document.getElementById('s-elec').innerText = count.elec;
     });
 </script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
