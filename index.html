@@ -5,67 +5,460 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>E-Déchets CI | Signalement 🇨🇮</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Syne:wght@800&display=swap" rel="stylesheet">
     <style>
-        :root { --vert: #1b5e20; --orange: #ff9800; --gris: #f4f4f4; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--gris); overflow: hidden; height: 100vh; }
-        header { background: var(--vert); color: white; padding: 10px; text-align: center; height: 8vh; z-index: 1000; }
-        #map { height: 82vh; width: 100%; z-index: 1; }
-        .nav-bar { height: 10vh; display: flex; align-items: center; justify-content: center; background: white; border-top: 1px solid #ddd; position: fixed; bottom: 0; width: 100%; z-index: 9999; }
-        .main-btn { background: var(--orange); color: white; border: none; padding: 15px 30px; border-radius: 50px; font-weight: bold; width: 85%; box-shadow: 0 4px 10px rgba(0,0,0,0.2); font-size: 16px; }
-        #cgu-overlay { position: fixed; z-index: 20000; left: 0; top: 0; width: 100%; height: 100%; background: white; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; }
-        .overlay { display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); overflow-y: auto; }
-        .modal { background: white; margin: 5% auto; padding: 20px; width: 85%; max-width: 400px; border-radius: 15px; }
-        input, select { width: 100%; margin: 8px 0; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
-        .preview-img { width: 100%; height: 150px; object-fit: cover; border-radius: 8px; border: 2px solid var(--orange); }
-        .gps-info { font-size: 11px; color: #555; background: #eee; padding: 8px; border-radius: 5px; margin: 8px 0; }
-        .loading { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 15000; text-align: center; padding-top: 40%; font-weight: bold; color: var(--vert); }
+        :root {
+            --vert: #0d4a1f;
+            --vert-light: #1b7a35;
+            --orange: #ff6b00;
+            --orange-light: #ff9800;
+            --gris: #f0f4f0;
+            --blanc: #ffffff;
+            --texte: #1a2e1a;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            margin: 0;
+            background: var(--gris);
+            overflow: hidden;
+            height: 100vh;
+            color: var(--texte);
+        }
+
+        /* === HEADER === */
+        header {
+            background: var(--vert);
+            color: white;
+            padding: 0 16px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 1000;
+            position: relative;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+        }
+
+        header .logo {
+            font-family: 'Syne', sans-serif;
+            font-size: 18px;
+            letter-spacing: -0.5px;
+        }
+
+        header .logo span { color: var(--orange-light); }
+
+        .header-badge {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 20px;
+            padding: 4px 10px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        /* === MAP === */
+        #map {
+            height: calc(100vh - 56px - 80px);
+            width: 100%;
+            z-index: 1;
+        }
+
+        /* === NAV BAR === */
+        .nav-bar {
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border-top: 1px solid #e0e8e0;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            z-index: 9999;
+            padding: 0 20px;
+            gap: 10px;
+        }
+
+        .main-btn {
+            background: linear-gradient(135deg, var(--orange) 0%, var(--orange-light) 100%);
+            color: white;
+            border: none;
+            padding: 0 30px;
+            height: 52px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 15px;
+            flex: 1;
+            box-shadow: 0 4px 20px rgba(255,107,0,0.4);
+            cursor: pointer;
+            letter-spacing: 0.3px;
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+
+        .main-btn:active {
+            transform: scale(0.97);
+            box-shadow: 0 2px 10px rgba(255,107,0,0.3);
+        }
+
+        /* === CGU OVERLAY === */
+        #cgu-overlay {
+            position: fixed;
+            z-index: 20000;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            background: var(--vert);
+            display: flex;
+            flex-direction: column;
+            padding: 40px 24px 30px;
+        }
+
+        #cgu-overlay .brand {
+            font-family: 'Syne', sans-serif;
+            font-size: 32px;
+            color: white;
+            margin-bottom: 8px;
+        }
+
+        #cgu-overlay .brand span { color: var(--orange-light); }
+
+        #cgu-overlay .subtitle {
+            color: rgba(255,255,255,0.7);
+            font-size: 13px;
+            margin-bottom: 30px;
+        }
+
+        #cgu-overlay .content-box {
+            flex-grow: 1;
+            overflow-y: auto;
+            background: rgba(255,255,255,0.08);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.15);
+            margin-bottom: 20px;
+        }
+
+        #cgu-overlay h3 { color: var(--orange-light); font-size: 14px; margin: 0 0 10px; }
+        #cgu-overlay p { color: rgba(255,255,255,0.85); font-size: 13px; line-height: 1.6; margin: 0 0 16px; }
+
+        .feature-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 10px;
+            padding: 12px;
+        }
+
+        .feature-icon { font-size: 20px; flex-shrink: 0; }
+        .feature-text { color: rgba(255,255,255,0.8); font-size: 12px; line-height: 1.5; }
+
+        .btn-accept {
+            background: var(--orange);
+            color: white;
+            border: none;
+            padding: 18px;
+            border-radius: 14px;
+            width: 100%;
+            font-weight: 700;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 16px;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(255,107,0,0.4);
+        }
+
+        /* === LOADING === */
+        .loading {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(13,74,31,0.95);
+            z-index: 15000;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+        }
+
+        .loading.active { display: flex; }
+
+        .spinner {
+            width: 48px; height: 48px;
+            border: 4px solid rgba(255,255,255,0.2);
+            border-top-color: var(--orange-light);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .loading p { color: white; font-weight: 600; margin: 0; }
+        .loading small { color: rgba(255,255,255,0.6); font-size: 12px; }
+
+        /* === MODAL FORM === */
+        .overlay {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(4px);
+            overflow-y: auto;
+        }
+
+        .modal {
+            background: white;
+            margin: 16px auto;
+            padding: 24px 20px;
+            width: 90%;
+            max-width: 420px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .modal-header h3 {
+            color: var(--vert);
+            margin: 0;
+            font-family: 'Syne', sans-serif;
+            font-size: 18px;
+        }
+
+        .preview-img {
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+            border-radius: 12px;
+            border: 2px solid #e0e8e0;
+            margin-bottom: 12px;
+        }
+
+        .gps-info {
+            font-size: 11px;
+            color: #555;
+            background: #f0f4f0;
+            padding: 10px 12px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            border-left: 3px solid var(--vert-light);
+            line-height: 1.4;
+        }
+
+        .form-group { margin-bottom: 10px; }
+
+        .form-label {
+            display: block;
+            font-size: 11px;
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1.5px solid #e0e8e0;
+            border-radius: 10px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 14px;
+            color: var(--texte);
+            background: #fafcfa;
+            transition: border-color 0.2s;
+            outline: none;
+        }
+
+        input:focus, select:focus { border-color: var(--vert-light); background: white; }
+
+        input.error { border-color: #d32f2f; }
+
+        .btn-submit {
+            width: 100%;
+            background: linear-gradient(135deg, var(--vert) 0%, var(--vert-light) 100%);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 15px;
+            cursor: pointer;
+            margin-top: 8px;
+            box-shadow: 0 4px 16px rgba(13,74,31,0.3);
+            transition: transform 0.1s;
+            letter-spacing: 0.3px;
+        }
+
+        .btn-submit:active { transform: scale(0.98); }
+        .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .btn-cancel {
+            width: 100%;
+            margin-top: 10px;
+            background: none;
+            border: none;
+            color: #aaa;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 13px;
+            cursor: pointer;
+            padding: 8px;
+        }
+
+        /* === SUCCESS TOAST === */
+        .toast {
+            display: none;
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--vert);
+            color: white;
+            padding: 14px 24px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 13px;
+            z-index: 20001;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .toast.show { display: block; animation: fadeUp 0.3s ease; }
+        @keyframes fadeUp { from { opacity: 0; transform: translate(-50%, 20px); } to { opacity: 1; transform: translate(-50%, 0); } }
+
+        /* === MAP MARKERS === */
+        .custom-marker {
+            background: var(--orange);
+            border: 3px solid white;
+            border-radius: 50% 50% 50% 0;
+            transform: rotate(-45deg);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
     </style>
 </head>
 <body>
 
+<!-- CGU / WELCOME -->
 <div id="cgu-overlay">
-    <h2 style="color:var(--vert)">E-Déchets CI 🇨🇮</h2>
-    <div style="flex-grow:1; overflow-y:auto;">
-        <h3>Eco-Engagement</h3>
-        <p>En signalant un déchet, vous participez à la dépollution de la Côte d'Ivoire. Nous collectons votre email pour vous remercier et vous tenir informé du ramassage.</p>
+    <div class="brand">E-Déchets <span>CI</span> 🇨🇮</div>
+    <div class="subtitle">Plateforme citoyenne de signalement des déchets électroniques</div>
+
+    <div class="content-box">
+        <h3>VOTRE ENGAGEMENT COMPTE</h3>
+        <p>Chaque signalement contribue à la dépollution de la Côte d'Ivoire. Ensemble, protégeons notre environnement et la santé des communautés.</p>
+
+        <div class="feature-list">
+            <div class="feature-item">
+                <span class="feature-icon">📸</span>
+                <div class="feature-text"><strong style="color:white">Photo + Localisation GPS</strong><br>Photographiez et géolocalisez automatiquement le déchet</div>
+            </div>
+            <div class="feature-item">
+                <span class="feature-icon">📧</span>
+                <div class="feature-text"><strong style="color:white">Confirmation par email</strong><br>Nous collectons votre email pour vous remercier et vous informer du ramassage</div>
+            </div>
+            <div class="feature-item">
+                <span class="feature-icon">🚛</span>
+                <div class="feature-text"><strong style="color:white">Collecte rapide</strong><br>Les équipes terrain sont notifiées immédiatement via le tableau de bord</div>
+            </div>
+        </div>
     </div>
-    <button onclick="document.getElementById('cgu-overlay').style.display='none'" style="background:var(--vert); color:white; border:none; padding:15px; border-radius:8px; width:100%; font-weight:bold;">ACCEPTER</button>
+
+    <button class="btn-accept" onclick="document.getElementById('cgu-overlay').style.display='none'">
+        J'ACCEPTE & JE COMMENCE →
+    </button>
 </div>
 
-<div id="loading-screen" class="loading">📸 Traitement de l'image...<br>📍 GPS en cours</div>
+<!-- LOADING -->
+<div id="loading-screen" class="loading">
+    <div class="spinner"></div>
+    <p>Traitement en cours...</p>
+    <small id="loading-status">📸 Compression de l'image</small>
+</div>
 
-<header><h3 style="margin:0;">Signaler un E-Déchet 🌍</h3></header>
+<!-- HEADER -->
+<header>
+    <div class="logo">E-Déchets <span>CI</span></div>
+    <div class="header-badge">🇨🇮 Signalement</div>
+</header>
+
 <div id="map"></div>
 
+<!-- NAV -->
 <div class="nav-bar">
-    <button class="main-btn" onclick="document.getElementById('camera-file').click()">📷 PHOTO & SIGNALER</button>
+    <button class="main-btn" onclick="document.getElementById('camera-file').click()">
+        📷 PHOTOGRAPHIER & SIGNALER
+    </button>
 </div>
 
-<input type="file" id="camera-file" accept="image/*" capture="camera" style="display:none">
+<input type="file" id="camera-file" accept="image/*" capture="environment" style="display:none">
 
+<!-- FORM MODAL -->
 <div id="form-modal" class="overlay">
     <div class="modal">
-        <h3 style="color:var(--vert); margin:0;">Détails du Signalement</h3>
-        <img id="img-preview" class="preview-img">
-        <div id="address-display" class="gps-info">Localisation...</div>
-        
-        <input type="email" id="user-email" placeholder="Votre E-mail (Requis)" required>
-        <input type="text" id="node-name" placeholder="Nom du lieu (ex: Marché d'Adjamé)">
-        <select id="node-type">
-            <option value="Informatique">💻 Informatique/Mobile</option>
-            <option value="Batteries">🔋 Piles/Batteries</option>
-            <option value="Electromenager">📺 Électroménager</option>
-        </select>
-        
-        <button id="submit-btn" style="width:100%; background:var(--vert); color:white; border:none; padding:15px; border-radius:8px; font-weight:bold;">ENVOYER LE SIGNALEMENT</button>
-        <button onclick="location.reload()" style="width:100%; margin-top:10px; background:none; border:none; color:#888;">Annuler</button>
+        <div class="modal-header">
+            <span style="font-size:24px">🗂️</span>
+            <h3>Détails du Signalement</h3>
+        </div>
+
+        <img id="img-preview" class="preview-img" src="" alt="Aperçu photo">
+        <div id="address-display" class="gps-info">📍 Récupération de la position GPS...</div>
+
+        <div class="form-group">
+            <label class="form-label">Email <span style="color:#d32f2f">*</span></label>
+            <input type="email" id="user-email" placeholder="votre@email.com" required>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Nom du lieu</label>
+            <input type="text" id="node-name" placeholder="Ex: Marché d'Adjamé, Rue 12...">
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Type de déchet</label>
+            <select id="node-type">
+                <option value="Informatique">💻 Informatique / Mobile</option>
+                <option value="Batteries">🔋 Piles / Batteries</option>
+                <option value="Electromenager">📺 Électroménager</option>
+            </select>
+        </div>
+
+        <button id="submit-btn" class="btn-submit">✅ ENVOYER LE SIGNALEMENT</button>
+        <button class="btn-cancel" onclick="location.reload()">Annuler</button>
     </div>
 </div>
+
+<!-- TOAST -->
+<div id="toast" class="toast"></div>
+
+<!-- EmailJS SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+    // =============================================
+    // CONFIGURATION — METTEZ À JOUR CES VALEURS
+    // =============================================
     const firebaseConfig = {
         apiKey: "AIzaSyCx78sbB4rxfF24tzooTUWPrZcOOGWDL8xk",
         authDomain: "e-dechets-ci.firebaseapp.com",
@@ -73,70 +466,259 @@
         appId: "1:921449360134:web:db17f6d1f285ecddfa8c87"
     };
 
+    // EmailJS — Créez un compte sur emailjs.com
+    // puis remplacez ces 3 valeurs :
+    const EMAILJS_PUBLIC_KEY  = "VOTRE_PUBLIC_KEY";   // Account > API Keys
+    const EMAILJS_SERVICE_ID  = "VOTRE_SERVICE_ID";   // Email Services > Service ID
+    const EMAILJS_TEMPLATE_ID = "VOTRE_TEMPLATE_ID";  // Email Templates > Template ID
+    // =============================================
+
+    emailjs.init(EMAILJS_PUBLIC_KEY);
+
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const colRef = collection(db, "points_collecte");
 
-    var map = L.map('map', {zoomControl: false}).setView([5.3484, -4.0305], 12);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+    // === CARTE ===
+    const map = L.map('map', { zoomControl: false, attributionControl: false })
+                 .setView([5.3484, -4.0305], 12);
 
-    let currentCoords = null, compressedImage = null, currentAddress = "";
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+    }).addTo(map);
 
+    // Afficher les signalements existants en temps réel sur la carte publique
+    const publicMarkers = {};
+
+    onSnapshot(colRef, (snap) => {
+        // Supprimer les anciens marqueurs
+        Object.values(publicMarkers).forEach(m => map.removeLayer(m));
+
+        snap.forEach((docDb) => {
+            const d = docDb.data();
+            if (!d.lat || !d.lng) return;
+
+            const icon = L.divIcon({
+                html: `<div style="
+                    background: ${d.type === 'Batteries' ? '#ff9800' : d.type === 'Electromenager' ? '#8e44ad' : '#1976d2'};
+                    width: 14px; height: 14px;
+                    border-radius: 50%;
+                    border: 3px solid white;
+                    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+                "></div>`,
+                className: '',
+                iconSize: [20, 20],
+                iconAnchor: [10, 10]
+            });
+
+            const marker = L.marker([d.lat, d.lng], { icon })
+                .addTo(map)
+                .bindPopup(`<b>${d.type}</b><br><small>📍 ${d.nom || 'Signalement'}</small>`);
+
+            publicMarkers[docDb.id] = marker;
+        });
+    });
+
+    // === VARIABLES ===
+    let currentCoords = null;
+    let compressedImage = null;
+    let currentAddress = "";
+
+    // === UTILITAIRES ===
+    function showLoading(status) {
+        document.getElementById('loading-screen').classList.add('active');
+        document.getElementById('loading-status').innerText = status;
+    }
+
+    function hideLoading() {
+        document.getElementById('loading-screen').classList.remove('active');
+    }
+
+    function showToast(msg, duration = 4000) {
+        const toast = document.getElementById('toast');
+        toast.innerText = msg;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), duration);
+    }
+
+    function compressImage(file) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (e) => {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_SIZE = 800;
+                    let w = img.width, h = img.height;
+                    if (w > h) { if (w > MAX_SIZE) { h = Math.round(h * MAX_SIZE / w); w = MAX_SIZE; } }
+                    else { if (h > MAX_SIZE) { w = Math.round(w * MAX_SIZE / h); h = MAX_SIZE; } }
+                    canvas.width = w; canvas.height = h;
+                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                    resolve(canvas.toDataURL('image/jpeg', 0.7));
+                };
+            };
+        });
+    }
+
+    async function reverseGeocode(lat, lng) {
+        try {
+            const res = await fetch(
+                `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=fr`,
+                { headers: { 'User-Agent': 'EDechetsCi/1.0' } }
+            );
+            const data = await res.json();
+            return data.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        } catch {
+            return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        }
+    }
+
+    // === PRISE DE PHOTO ===
     document.getElementById('camera-file').onchange = async (e) => {
-        if (e.target.files.length > 0) {
-            document.getElementById('loading-screen').style.display = 'block';
-            navigator.geolocation.getCurrentPosition(async (pos) => {
+        if (!e.target.files.length) return;
+        const file = e.target.files[0];
+
+        showLoading('📸 Compression de l\'image...');
+
+        try {
+            // Compresser l'image
+            compressedImage = await compressImage(file);
+            document.getElementById('img-preview').src = compressedImage;
+
+            // GPS
+            document.getElementById('loading-status').innerText = '📍 Localisation GPS...';
+
+            await new Promise((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject, {
+                    enableHighAccuracy: true,
+                    timeout: 15000,
+                    maximumAge: 0
+                });
+            }).then(async (pos) => {
                 currentCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
                 map.setView([currentCoords.lat, currentCoords.lng], 16);
-                
-                try {
-                    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${currentCoords.lat}&lon=${currentCoords.lng}&format=json`);
-                    const data = await res.json();
-                    currentAddress = data.display_name;
-                    document.getElementById('address-display').innerText = "📍 " + currentAddress;
-                } catch { currentAddress = "Position GPS"; }
-                
-                const reader = new FileReader();
-                reader.readAsDataURL(e.target.files[0]);
-                reader.onload = (f) => {
-                    const img = new Image(); img.src = f.target.result;
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        const MAX_SIZE = 600;
-                        let w = img.width, h = img.height;
-                        if (w > h) { if (w > MAX_SIZE) { h *= MAX_SIZE / w; w = MAX_SIZE; } } 
-                        else { if (h > MAX_SIZE) { w *= MAX_SIZE / h; h = MAX_SIZE; } }
-                        canvas.width = w; canvas.height = h;
-                        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                        compressedImage = canvas.toDataURL('image/jpeg', 0.6);
-                        document.getElementById('img-preview').src = compressedImage;
-                        document.getElementById('loading-screen').style.display = 'none';
-                        document.getElementById('form-modal').style.display = 'block';
-                    };
-                };
-            }, () => alert("GPS requis."), { enableHighAccuracy: true });
+
+                // Géocodage inversé
+                document.getElementById('loading-status').innerText = '🗺️ Récupération de l\'adresse...';
+                currentAddress = await reverseGeocode(currentCoords.lat, currentCoords.lng);
+
+                document.getElementById('address-display').innerHTML = `
+                    📍 <strong>${currentAddress.split(',').slice(0, 3).join(',')}</strong><br>
+                    <span style="color:#888">🎯 Précision : ~${Math.round(pos.coords.accuracy)}m | Coords : ${currentCoords.lat.toFixed(5)}, ${currentCoords.lng.toFixed(5)}</span>
+                `;
+
+                // Marqueur temporaire
+                L.circleMarker([currentCoords.lat, currentCoords.lng], {
+                    radius: 12, fillColor: '#ff6b00', color: 'white',
+                    weight: 3, fillOpacity: 0.9
+                }).addTo(map).bindPopup('📍 Votre signalement').openPopup();
+            });
+
+            hideLoading();
+            document.getElementById('form-modal').style.display = 'block';
+
+        } catch (err) {
+            hideLoading();
+            if (err.code === 1) {
+                alert("⚠️ Autorisation GPS refusée. Veuillez activer la géolocalisation dans les paramètres de votre navigateur.");
+            } else if (err.code === 3) {
+                alert("⏱️ Délai GPS dépassé. Assurez-vous d'être en extérieur et réessayez.");
+            } else {
+                alert("Une erreur est survenue. Réessayez.");
+            }
         }
     };
 
+    // === ENVOI DU SIGNALEMENT ===
     document.getElementById('submit-btn').onclick = async () => {
-        const email = document.getElementById('user-email').value;
-        if(!email.includes('@')) { alert("Email valide requis !"); return; }
-        
+        const email = document.getElementById('user-email').value.trim();
+        const nom = document.getElementById('node-name').value.trim() || "Signalement anonyme";
+        const type = document.getElementById('node-type').value;
+
+        // Validation
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            document.getElementById('user-email').classList.add('error');
+            document.getElementById('user-email').focus();
+            showToast("⚠️ Veuillez saisir un email valide");
+            return;
+        }
+        document.getElementById('user-email').classList.remove('error');
+
+        if (!currentCoords || !compressedImage) {
+            showToast("⚠️ Données incomplètes, réessayez");
+            return;
+        }
+
+        const btn = document.getElementById('submit-btn');
+        btn.disabled = true;
+        btn.innerText = '⏳ Envoi en cours...';
+
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('fr-FR', {
+            day: '2-digit', month: 'long', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+        });
+
         try {
+            // 1. Sauvegarder dans Firestore
             await addDoc(colRef, {
-                lat: currentCoords.lat, lng: currentCoords.lng,
+                lat: currentCoords.lat,
+                lng: currentCoords.lng,
                 adresse: currentAddress,
                 email: email,
-                nom: document.getElementById('node-name').value || "Signalement",
-                type: document.getElementById('node-type').value,
+                nom: nom,
+                type: type,
                 photo: compressedImage,
-                date: serverTimestamp()
+                date: serverTimestamp(),
+                statut: "en_attente"
             });
-            alert("Merci ! Un email de remerciement vous a été envoyé. 🇨🇮");
-            location.reload();
-        } catch { alert("Erreur d'envoi."); }
+
+            // 2. Envoyer l'email de confirmation via EmailJS
+            //
+            // ⚠️ CONFIGURATION EMAILJS REQUISE :
+            // Dans votre template EmailJS, créez les variables suivantes :
+            // {{to_email}}     → email du déclarant
+            // {{to_name}}      → nom/email du déclarant
+            // {{type_dechet}}  → type de déchet signalé
+            // {{lieu}}         → nom du lieu
+            // {{adresse}}      → adresse GPS complète
+            // {{date}}         → date et heure du signalement
+            // {{lien_maps}}    → lien Google Maps
+            //
+            try {
+                await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+                    to_email:     email,
+                    to_name:      email.split('@')[0],
+                    type_dechet:  type,
+                    lieu:         nom,
+                    adresse:      currentAddress.split(',').slice(0, 3).join(','),
+                    date:         dateStr,
+                    lien_maps:    `https://www.google.com/maps?q=${currentCoords.lat},${currentCoords.lng}`
+                });
+                showToast("✅ Signalement enregistré ! Email de confirmation envoyé.", 5000);
+            } catch (emailErr) {
+                console.warn("Email non envoyé (config EmailJS à vérifier) :", emailErr);
+                showToast("✅ Signalement enregistré ! (Email en attente de configuration)", 5000);
+            }
+
+            document.getElementById('form-modal').style.display = 'none';
+            btn.disabled = false;
+            btn.innerText = '✅ ENVOYER LE SIGNALEMENT';
+
+            // Rechargement après 3s
+            setTimeout(() => location.reload(), 3000);
+
+        } catch (err) {
+            console.error("Erreur Firestore :", err);
+            btn.disabled = false;
+            btn.innerText = '✅ ENVOYER LE SIGNALEMENT';
+            showToast("❌ Erreur lors de l'enregistrement. Vérifiez votre connexion.");
+        }
     };
 </script>
+
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </body>
 </html>
