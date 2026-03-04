@@ -4,8 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>E-Déchets CI | Signalement 🇨🇮</title>
+    
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Syne:wght@800&display=swap" rel="stylesheet">
+    
     <style>
         :root {
             --vert: #0d4a1f;
@@ -23,12 +25,12 @@
             font-family: 'Space Grotesk', sans-serif;
             margin: 0;
             background: var(--gris);
-            overflow: hidden;
+            overflow: hidden; /* Empêche le défilement de la page entière sur mobile */
             height: 100vh;
             color: var(--texte);
         }
 
-        /* === HEADER === */
+        /* === ENTÊTE (HEADER) === */
         header {
             background: var(--vert);
             color: white;
@@ -42,12 +44,7 @@
             box-shadow: 0 2px 12px rgba(0,0,0,0.3);
         }
 
-        header .logo {
-            font-family: 'Syne', sans-serif;
-            font-size: 18px;
-            letter-spacing: -0.5px;
-        }
-
+        header .logo { font-family: 'Syne', sans-serif; font-size: 18px; }
         header .logo span { color: var(--orange-light); }
 
         .header-badge {
@@ -59,14 +56,15 @@
             font-weight: 600;
         }
 
-        /* === MAP === */
+        /* === ZONE DE LA CARTE === */
         #map {
-            height: calc(100vh - 56px - 80px);
+            height: calc(100vh - 56px - 80px); /* Hauteur totale moins header et barre de navigation */
             width: 100%;
             z-index: 1;
+            background: #cbd2d0;
         }
 
-        /* === NAV BAR === */
+        /* === BARRE DE NAVIGATION BASSE === */
         .nav-bar {
             height: 80px;
             display: flex;
@@ -79,7 +77,6 @@
             width: 100%;
             z-index: 9999;
             padding: 0 20px;
-            gap: 10px;
         }
 
         .main-btn {
@@ -90,94 +87,13 @@
             height: 52px;
             border-radius: 50px;
             font-weight: 700;
-            font-family: 'Space Grotesk', sans-serif;
             font-size: 15px;
             flex: 1;
             box-shadow: 0 4px 20px rgba(255,107,0,0.4);
             cursor: pointer;
-            letter-spacing: 0.3px;
-            transition: transform 0.1s, box-shadow 0.1s;
         }
 
-        .main-btn:active {
-            transform: scale(0.97);
-            box-shadow: 0 2px 10px rgba(255,107,0,0.3);
-        }
-
-        /* === CGU OVERLAY === */
-        #cgu-overlay {
-            position: fixed;
-            z-index: 20000;
-            left: 0; top: 0;
-            width: 100%; height: 100%;
-            background: var(--vert);
-            display: flex;
-            flex-direction: column;
-            padding: 40px 24px 30px;
-        }
-
-        #cgu-overlay .brand {
-            font-family: 'Syne', sans-serif;
-            font-size: 32px;
-            color: white;
-            margin-bottom: 8px;
-        }
-
-        #cgu-overlay .brand span { color: var(--orange-light); }
-
-        #cgu-overlay .subtitle {
-            color: rgba(255,255,255,0.7);
-            font-size: 13px;
-            margin-bottom: 30px;
-        }
-
-        #cgu-overlay .content-box {
-            flex-grow: 1;
-            overflow-y: auto;
-            background: rgba(255,255,255,0.08);
-            border-radius: 16px;
-            padding: 20px;
-            border: 1px solid rgba(255,255,255,0.15);
-            margin-bottom: 20px;
-        }
-
-        #cgu-overlay h3 { color: var(--orange-light); font-size: 14px; margin: 0 0 10px; }
-        #cgu-overlay p { color: rgba(255,255,255,0.85); font-size: 13px; line-height: 1.6; margin: 0 0 16px; }
-
-        .feature-list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .feature-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            background: rgba(255,255,255,0.06);
-            border-radius: 10px;
-            padding: 12px;
-        }
-
-        .feature-icon { font-size: 20px; flex-shrink: 0; }
-        .feature-text { color: rgba(255,255,255,0.8); font-size: 12px; line-height: 1.5; }
-
-        .btn-accept {
-            background: var(--orange);
-            color: white;
-            border: none;
-            padding: 18px;
-            border-radius: 14px;
-            width: 100%;
-            font-weight: 700;
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 16px;
-            letter-spacing: 0.5px;
-            cursor: pointer;
-            box-shadow: 0 4px 20px rgba(255,107,0,0.4);
-        }
-
-        /* === LOADING === */
+        /* === ÉCRAN DE CHARGEMENT === */
         .loading {
             display: none;
             position: fixed;
@@ -188,25 +104,19 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 16px;
         }
-
         .loading.active { display: flex; }
 
         .spinner {
-            width: 48px; height: 48px;
+            width: 40px; height: 40px;
             border: 4px solid rgba(255,255,255,0.2);
             border-top-color: var(--orange-light);
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
         }
-
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        .loading p { color: white; font-weight: 600; margin: 0; }
-        .loading small { color: rgba(255,255,255,0.6); font-size: 12px; }
-
-        /* === MODAL FORM === */
+        /* === MODAL DU FORMULAIRE === */
         .overlay {
             display: none;
             position: fixed;
@@ -215,222 +125,56 @@
             width: 100%; height: 100%;
             background: rgba(0,0,0,0.8);
             backdrop-filter: blur(4px);
-            overflow-y: auto;
         }
 
         .modal {
             background: white;
-            margin: 16px auto;
-            padding: 24px 20px;
+            margin: 10px auto;
+            padding: 20px;
             width: 90%;
-            max-width: 420px;
+            max-width: 400px;
             border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            max-height: 95vh;
+            overflow-y: auto;
         }
 
-        .modal-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 16px;
-        }
-
-        .modal-header h3 {
-            color: var(--vert);
-            margin: 0;
-            font-family: 'Syne', sans-serif;
-            font-size: 18px;
-        }
-
-        .preview-img {
-            width: 100%;
-            height: 160px;
-            object-fit: cover;
-            border-radius: 12px;
-            border: 2px solid #e0e8e0;
-            margin-bottom: 12px;
-        }
-
-        .gps-info {
-            font-size: 11px;
-            color: #555;
-            background: #f0f4f0;
-            padding: 10px 12px;
-            border-radius: 8px;
-            margin-bottom: 12px;
-            border-left: 3px solid var(--vert-light);
-            line-height: 1.4;
-        }
-
+        .preview-img { width: 100%; height: 140px; object-fit: cover; border-radius: 12px; margin-bottom: 10px; }
+        .gps-info { font-size: 11px; background: #f0f4f0; padding: 8px; border-radius: 8px; margin-bottom: 10px; border-left: 3px solid var(--vert-light); }
         .form-group { margin-bottom: 10px; }
+        .form-label { display: block; font-size: 10px; font-weight: 600; color: #666; margin-bottom: 3px; text-transform: uppercase; }
+        input, select { width: 100%; padding: 10px; border: 1.5px solid #e0e8e0; border-radius: 8px; font-size: 14px; }
+        .btn-submit { width: 100%; background: var(--vert); color: white; border: none; padding: 14px; border-radius: 10px; font-weight: 700; cursor: pointer; }
 
-        .form-label {
-            display: block;
-            font-size: 11px;
-            font-weight: 600;
-            color: #666;
-            margin-bottom: 4px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        input, select {
-            width: 100%;
-            padding: 12px 14px;
-            border: 1.5px solid #e0e8e0;
-            border-radius: 10px;
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 14px;
-            color: var(--texte);
-            background: #fafcfa;
-            transition: border-color 0.2s;
-            outline: none;
-        }
-
-        input:focus, select:focus { border-color: var(--vert-light); background: white; }
-
-        input.error { border-color: #d32f2f; }
-
-        .btn-submit {
-            width: 100%;
-            background: linear-gradient(135deg, var(--vert) 0%, var(--vert-light) 100%);
-            color: white;
-            border: none;
-            padding: 16px;
-            border-radius: 12px;
-            font-weight: 700;
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 15px;
-            cursor: pointer;
-            margin-top: 8px;
-            box-shadow: 0 4px 16px rgba(13,74,31,0.3);
-            transition: transform 0.1s;
-            letter-spacing: 0.3px;
-        }
-
-        .btn-submit:active { transform: scale(0.98); }
-        .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
-
-        .btn-cancel {
-            width: 100%;
-            margin-top: 10px;
-            background: none;
-            border: none;
-            color: #aaa;
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 13px;
-            cursor: pointer;
-            padding: 8px;
-        }
-
-        /* === SUCCESS TOAST === */
+        /* === TOAST (NOTIFICATION) === */
         .toast {
-            display: none;
-            position: fixed;
-            bottom: 100px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--vert);
-            color: white;
-            padding: 14px 24px;
-            border-radius: 50px;
-            font-weight: 600;
-            font-size: 13px;
-            z-index: 20001;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-            text-align: center;
-            white-space: nowrap;
+            display: none; position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
+            background: var(--vert); color: white; padding: 12px 24px; border-radius: 50px; font-size: 13px; z-index: 20001;
         }
-
-        .toast.show { display: block; animation: fadeUp 0.3s ease; }
-        @keyframes fadeUp { from { opacity: 0; transform: translate(-50%, 20px); } to { opacity: 1; transform: translate(-50%, 0); } }
-
-        /* === MAP MARKERS === */
-        .custom-marker {
-            background: var(--orange);
-            border: 3px solid white;
-            border-radius: 50% 50% 50% 0;
-            transform: rotate(-45deg);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-        }
+        .toast.show { display: block; }
     </style>
 </head>
 <body>
 
-<!-- CGU / WELCOME -->
-<div id="cgu-overlay">
-    <div class="brand">E-Déchets <span>CI</span> 🇨🇮</div>
-    <div class="subtitle">Plateforme citoyenne de signalement des déchets électroniques</div>
-
-    <div class="content-box">
-        <h3>VOTRE ENGAGEMENT COMPTE</h3>
-        <p>Chaque signalement contribue à la dépollution de la Côte d'Ivoire. Ensemble, protégeons notre environnement et la santé des communautés.</p>
-
-        <div class="feature-list">
-            <div class="feature-item">
-                <span class="feature-icon">📸</span>
-                <div class="feature-text"><strong style="color:white">Photo + Localisation GPS</strong><br>Photographiez et géolocalisez automatiquement le déchet</div>
-            </div>
-            <div class="feature-item">
-                <span class="feature-icon">📧</span>
-                <div class="feature-text"><strong style="color:white">Confirmation par email</strong><br>Nous collectons votre email pour vous remercier et vous informer du ramassage</div>
-            </div>
-            <div class="feature-item">
-                <span class="feature-icon">🚛</span>
-                <div class="feature-text"><strong style="color:white">Collecte rapide</strong><br>Les équipes terrain sont notifiées immédiatement via le tableau de bord</div>
-            </div>
-        </div>
-    </div>
-
-    <button class="btn-accept" onclick="document.getElementById('cgu-overlay').style.display='none'">
-        J'ACCEPTE & JE COMMENCE →
-    </button>
-</div>
-
-<!-- LOADING -->
-<div id="loading-screen" class="loading">
-    <div class="spinner"></div>
-    <p>Traitement en cours...</p>
-    <small id="loading-status">📸 Compression de l'image</small>
-</div>
-
-<!-- HEADER -->
 <header>
     <div class="logo">E-Déchets <span>CI</span></div>
-    <div class="header-badge">🇨🇮 Signalement</div>
+    <div class="header-badge">🇨🇮 CÔTE D'IVOIRE</div>
 </header>
 
 <div id="map"></div>
 
-<!-- NAV -->
 <div class="nav-bar">
     <button class="main-btn" onclick="document.getElementById('camera-file').click()">
-        📷 PHOTOGRAPHIER & SIGNALER
+        📷 PHOTOGRAPHIER UN DÉCHET
     </button>
 </div>
 
 <input type="file" id="camera-file" accept="image/*" capture="environment" style="display:none">
 
-<!-- FORM MODAL -->
 <div id="form-modal" class="overlay">
     <div class="modal">
-        <div class="modal-header">
-            <span style="font-size:24px">🗂️</span>
-            <h3>Détails du Signalement</h3>
-        </div>
-
-        <img id="img-preview" class="preview-img" src="" alt="Aperçu photo">
-        <div id="address-display" class="gps-info">📍 Récupération de la position GPS...</div>
-
-        <div class="form-group">
-            <label class="form-label">Email <span style="color:#d32f2f">*</span></label>
-            <input type="email" id="user-email" placeholder="votre@email.com" required>
-        </div>
-
-        <div class="form-group">
-            <label class="form-label">Nom du lieu</label>
-            <input type="text" id="node-name" placeholder="Ex: Marché d'Adjamé, Rue 12...">
-        </div>
+        <h3 style="color:var(--vert); font-family:'Syne'; margin-top:0;">Détails du Signalement</h3>
+        <img id="img-preview" class="preview-img" src="">
+        <div id="address-display" class="gps-info">📍 Localisation en cours...</div>
 
         <div class="form-group">
             <label class="form-label">Type de déchet</label>
@@ -438,27 +182,40 @@
                 <option value="Informatique">💻 Informatique / Mobile</option>
                 <option value="Batteries">🔋 Piles / Batteries</option>
                 <option value="Electromenager">📺 Électroménager</option>
+                <option value="Autre">📦 Autre e-déchet</option>
             </select>
         </div>
 
-        <button id="submit-btn" class="btn-submit">✅ ENVOYER LE SIGNALEMENT</button>
-        <button class="btn-cancel" onclick="location.reload()">Annuler</button>
+        <div class="form-group">
+            <label class="form-label">Nom du lieu / Point de repère</label>
+            <input type="text" id="node-name" placeholder="Ex: Face à la station Pétroci...">
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Votre Contact (Optionnel)</label>
+            <input type="text" id="user-contact" placeholder="N° WhatsApp ou Email">
+        </div>
+
+        <button id="submit-btn" class="btn-submit">ENVOYER LE SIGNALEMENT</button>
+        <button class="btn-cancel" style="width:100%; background:none; border:none; color:#aaa; font-size:12px; padding:10px; cursor:pointer;" onclick="location.reload()">ANNULER</button>
     </div>
 </div>
 
-<!-- TOAST -->
+<div id="loading-screen" class="loading">
+    <div class="spinner"></div>
+    <p style="color:white; margin-top:10px;">Traitement...</p>
+</div>
+
 <div id="toast" class="toast"></div>
 
-<!-- EmailJS SDK -->
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script type="module">
+    // Importation des modules Firebase
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // =============================================
-    // CONFIGURATION — METTEZ À JOUR CES VALEURS
-    // =============================================
+    // Configuration Firebase
     const firebaseConfig = {
         apiKey: "AIzaSyCx78sbB4rxfF24tzooTUWPrZcOOGWDL8xk",
         authDomain: "e-dechets-ci.firebaseapp.com",
@@ -466,82 +223,51 @@
         appId: "1:921449360134:web:db17f6d1f285ecddfa8c87"
     };
 
-    // EmailJS — Créez un compte sur emailjs.com
-    // puis remplacez ces 3 valeurs :
-    const EMAILJS_PUBLIC_KEY  = "VOTRE_PUBLIC_KEY";   // Account > API Keys
-    const EMAILJS_SERVICE_ID  = "VOTRE_SERVICE_ID";   // Email Services > Service ID
-    const EMAILJS_TEMPLATE_ID = "VOTRE_TEMPLATE_ID";  // Email Templates > Template ID
-    // =============================================
-
-    emailjs.init(EMAILJS_PUBLIC_KEY);
-
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const colRef = collection(db, "points_collecte");
 
-    // === CARTE ===
-    const map = L.map('map', { zoomControl: false, attributionControl: false })
-                 .setView([5.3484, -4.0305], 12);
+    // === CONFIGURATION DE LA CARTE (RESTRICTION CÔTE D'IVOIRE) ===
+    const ciBounds = L.latLngBounds(
+        L.latLng(4.30, -8.60), // Sud-Ouest
+        L.latLng(10.74, -2.48) // Nord-Est
+    );
+
+    const map = L.map('map', { 
+        zoomControl: false, 
+        attributionControl: false,
+        maxBounds: ciBounds,        // Limite la zone de déplacement
+        maxBoundsViscosity: 1.0,    // Force le blocage aux frontières
+        minZoom: 7                  // Empêche de trop dézoomer
+    }).setView([5.3484, -4.0305], 11); // Centré sur Abidjan au départ
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap'
+        bounds: ciBounds
     }).addTo(map);
 
-    // Afficher les signalements existants en temps réel sur la carte publique
-    const publicMarkers = {};
-
+    // Affichage des marqueurs existants en temps réel
+    const markers = {};
     onSnapshot(colRef, (snap) => {
-        // Supprimer les anciens marqueurs
-        Object.values(publicMarkers).forEach(m => map.removeLayer(m));
-
         snap.forEach((docDb) => {
             const d = docDb.data();
-            if (!d.lat || !d.lng) return;
-
+            if (!d.lat || !d.lng || markers[docDb.id]) return;
+            
+            // Couleur du point selon le type
+            const color = d.type === 'Batteries' ? '#ff9800' : '#1b7a35';
             const icon = L.divIcon({
-                html: `<div style="
-                    background: ${d.type === 'Batteries' ? '#ff9800' : d.type === 'Electromenager' ? '#8e44ad' : '#1976d2'};
-                    width: 14px; height: 14px;
-                    border-radius: 50%;
-                    border: 3px solid white;
-                    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-                "></div>`,
-                className: '',
-                iconSize: [20, 20],
-                iconAnchor: [10, 10]
+                html: `<div style="background:${color};width:10px;height:10px;border-radius:50%;border:2px solid white;"></div>`,
+                className: '', iconSize: [10, 10]
             });
-
-            const marker = L.marker([d.lat, d.lng], { icon })
-                .addTo(map)
-                .bindPopup(`<b>${d.type}</b><br><small>📍 ${d.nom || 'Signalement'}</small>`);
-
-            publicMarkers[docDb.id] = marker;
+            markers[docDb.id] = L.marker([d.lat, d.lng], { icon }).addTo(map);
         });
     });
 
-    // === VARIABLES ===
     let currentCoords = null;
     let compressedImage = null;
     let currentAddress = "";
 
-    // === UTILITAIRES ===
-    function showLoading(status) {
-        document.getElementById('loading-screen').classList.add('active');
-        document.getElementById('loading-status').innerText = status;
-    }
-
-    function hideLoading() {
-        document.getElementById('loading-screen').classList.remove('active');
-    }
-
-    function showToast(msg, duration = 4000) {
-        const toast = document.getElementById('toast');
-        toast.innerText = msg;
-        toast.classList.add('show');
-        setTimeout(() => toast.classList.remove('show'), duration);
-    }
-
-    function compressImage(file) {
+    // Fonction pour réduire le poids de l'image (indispensable pour Firebase Free)
+    async function compressImage(file) {
         return new Promise((resolve) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
@@ -550,175 +276,86 @@
                 img.src = e.target.result;
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    const MAX_SIZE = 800;
+                    const MAX = 800; // Taille max 800px
                     let w = img.width, h = img.height;
-                    if (w > h) { if (w > MAX_SIZE) { h = Math.round(h * MAX_SIZE / w); w = MAX_SIZE; } }
-                    else { if (h > MAX_SIZE) { w = Math.round(w * MAX_SIZE / h); h = MAX_SIZE; } }
+                    if (w > h) { if (w > MAX) { h *= MAX/w; w = MAX; } }
+                    else { if (h > MAX) { w *= MAX/h; h = MAX; } }
                     canvas.width = w; canvas.height = h;
                     canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                    resolve(canvas.toDataURL('image/jpeg', 0.7));
+                    resolve(canvas.toDataURL('image/jpeg', 0.6)); // Qualité 60%
                 };
             };
         });
     }
 
-    async function reverseGeocode(lat, lng) {
-        try {
-            const res = await fetch(
-                `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=fr`,
-                { headers: { 'User-Agent': 'EDechetsCi/1.0' } }
-            );
-            const data = await res.json();
-            return data.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-        } catch {
-            return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-        }
-    }
-
-    // === PRISE DE PHOTO ===
+    // Gestion du clic caméra
     document.getElementById('camera-file').onchange = async (e) => {
         if (!e.target.files.length) return;
-        const file = e.target.files[0];
-
-        showLoading('📸 Compression de l\'image...');
-
+        document.getElementById('loading-screen').classList.add('active');
+        
         try {
-            // Compresser l'image
-            compressedImage = await compressImage(file);
+            // 1. Compression
+            compressedImage = await compressImage(e.target.files[0]);
             document.getElementById('img-preview').src = compressedImage;
 
-            // GPS
-            document.getElementById('loading-status').innerText = '📍 Localisation GPS...';
-
-            await new Promise((resolve, reject) => {
-                navigator.geolocation.getCurrentPosition(resolve, reject, {
-                    enableHighAccuracy: true,
-                    timeout: 15000,
-                    maximumAge: 0
-                });
-            }).then(async (pos) => {
-                currentCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-                map.setView([currentCoords.lat, currentCoords.lng], 16);
-
-                // Géocodage inversé
-                document.getElementById('loading-status').innerText = '🗺️ Récupération de l\'adresse...';
-                currentAddress = await reverseGeocode(currentCoords.lat, currentCoords.lng);
-
-                document.getElementById('address-display').innerHTML = `
-                    📍 <strong>${currentAddress.split(',').slice(0, 3).join(',')}</strong><br>
-                    <span style="color:#888">🎯 Précision : ~${Math.round(pos.coords.accuracy)}m | Coords : ${currentCoords.lat.toFixed(5)}, ${currentCoords.lng.toFixed(5)}</span>
-                `;
-
-                // Marqueur temporaire
-                L.circleMarker([currentCoords.lat, currentCoords.lng], {
-                    radius: 12, fillColor: '#ff6b00', color: 'white',
-                    weight: 3, fillOpacity: 0.9
-                }).addTo(map).bindPopup('📍 Votre signalement').openPopup();
+            // 2. Géolocalisation
+            const pos = await new Promise((res, rej) => {
+                navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy: true, timeout: 10000 });
             });
 
-            hideLoading();
-            document.getElementById('form-modal').style.display = 'block';
-
-        } catch (err) {
-            hideLoading();
-            if (err.code === 1) {
-                alert("⚠️ Autorisation GPS refusée. Veuillez activer la géolocalisation dans les paramètres de votre navigateur.");
-            } else if (err.code === 3) {
-                alert("⏱️ Délai GPS dépassé. Assurez-vous d'être en extérieur et réessayez.");
-            } else {
-                alert("Une erreur est survenue. Réessayez.");
+            currentCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+            
+            // 3. Vérification si l'utilisateur est bien en Côte d'Ivoire
+            if (!ciBounds.contains([currentCoords.lat, currentCoords.lng])) {
+                alert("Désolé, vous devez être en Côte d'Ivoire pour faire un signalement.");
+                location.reload();
+                return;
             }
+
+            map.setView([currentCoords.lat, currentCoords.lng], 16);
+
+            // 4. Récupération de l'adresse (Reverse Geocoding)
+            const resAddr = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${currentCoords.lat}&lon=${currentCoords.lng}&format=json`);
+            const dataAddr = await resAddr.json();
+            currentAddress = dataAddr.display_name || "Lieu détecté en Côte d'Ivoire";
+
+            document.getElementById('address-display').innerHTML = `📍 <b>Secteur :</b> ${currentAddress.split(',').slice(0,2).join(',')}`;
+            document.getElementById('loading-screen').classList.remove('active');
+            document.getElementById('form-modal').style.display = 'block';
+        } catch (err) {
+            document.getElementById('loading-screen').classList.remove('active');
+            alert("Erreur : Veuillez activer le GPS et autoriser l'accès.");
         }
     };
 
-    // === ENVOI DU SIGNALEMENT ===
+    // Envoi du formulaire à Firebase
     document.getElementById('submit-btn').onclick = async () => {
-        const email = document.getElementById('user-email').value.trim();
-        const nom = document.getElementById('node-name').value.trim() || "Signalement anonyme";
-        const type = document.getElementById('node-type').value;
-
-        // Validation
-        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-            document.getElementById('user-email').classList.add('error');
-            document.getElementById('user-email').focus();
-            showToast("⚠️ Veuillez saisir un email valide");
-            return;
-        }
-        document.getElementById('user-email').classList.remove('error');
-
-        if (!currentCoords || !compressedImage) {
-            showToast("⚠️ Données incomplètes, réessayez");
-            return;
-        }
-
         const btn = document.getElementById('submit-btn');
         btn.disabled = true;
-        btn.innerText = '⏳ Envoi en cours...';
-
-        const now = new Date();
-        const dateStr = now.toLocaleDateString('fr-FR', {
-            day: '2-digit', month: 'long', year: 'numeric',
-            hour: '2-digit', minute: '2-digit'
-        });
+        btn.innerText = 'Envoi...';
 
         try {
-            // 1. Sauvegarder dans Firestore
             await addDoc(colRef, {
                 lat: currentCoords.lat,
                 lng: currentCoords.lng,
                 adresse: currentAddress,
-                email: email,
-                nom: nom,
-                type: type,
+                contact: document.getElementById('user-contact').value || "Anonyme",
+                nom: document.getElementById('node-name').value || "Non précisé",
+                type: document.getElementById('node-type').value,
                 photo: compressedImage,
-                date: serverTimestamp(),
-                statut: "en_attente"
+                date: serverTimestamp()
             });
 
-            // 2. Envoyer l'email de confirmation via EmailJS
-            //
-            // ⚠️ CONFIGURATION EMAILJS REQUISE :
-            // Dans votre template EmailJS, créez les variables suivantes :
-            // {{to_email}}     → email du déclarant
-            // {{to_name}}      → nom/email du déclarant
-            // {{type_dechet}}  → type de déchet signalé
-            // {{lieu}}         → nom du lieu
-            // {{adresse}}      → adresse GPS complète
-            // {{date}}         → date et heure du signalement
-            // {{lien_maps}}    → lien Google Maps
-            //
-            try {
-                await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-                    to_email:     email,
-                    to_name:      email.split('@')[0],
-                    type_dechet:  type,
-                    lieu:         nom,
-                    adresse:      currentAddress.split(',').slice(0, 3).join(','),
-                    date:         dateStr,
-                    lien_maps:    `https://www.google.com/maps?q=${currentCoords.lat},${currentCoords.lng}`
-                });
-                showToast("✅ Signalement enregistré ! Email de confirmation envoyé.", 5000);
-            } catch (emailErr) {
-                console.warn("Email non envoyé (config EmailJS à vérifier) :", emailErr);
-                showToast("✅ Signalement enregistré ! (Email en attente de configuration)", 5000);
-            }
-
-            document.getElementById('form-modal').style.display = 'none';
-            btn.disabled = false;
-            btn.innerText = '✅ ENVOYER LE SIGNALEMENT';
-
-            // Rechargement après 3s
-            setTimeout(() => location.reload(), 3000);
-
+            const toast = document.getElementById('toast');
+            toast.innerText = "✅ Signalement réussi ! Merci.";
+            toast.classList.add('show');
+            setTimeout(() => location.reload(), 2500);
         } catch (err) {
-            console.error("Erreur Firestore :", err);
             btn.disabled = false;
-            btn.innerText = '✅ ENVOYER LE SIGNALEMENT';
-            showToast("❌ Erreur lors de l'enregistrement. Vérifiez votre connexion.");
+            alert("Erreur de connexion lors de l'envoi.");
         }
     };
 </script>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </body>
 </html>
